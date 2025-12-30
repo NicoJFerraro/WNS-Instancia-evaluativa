@@ -2,7 +2,7 @@
 
 import re
 
-def parse_recetas(file_path):
+def parse_recipes(file_path):
     # Read md recipe file and return dictionary list
     # Each dictionary represents a recipe, with keys: 'title', 'name', 'ingredients'
 
@@ -38,8 +38,9 @@ def parse_recetas(file_path):
             if seccion_ingredientes:
                 if line.startswith('##') and 'ingrediente' not in line.lower():
                     break
-
-                if not line.strip() or line.strip().startswith('-') and len(line.strip()) == 1:
+                if not line.strip():
+                    continue
+                if line.strip() == '-':
                     continue
                 
                 ingrediente = parse_ingrediente_linea(line)
@@ -56,12 +57,6 @@ def parse_recetas(file_path):
 
 def parse_ingrediente_linea(line):
     #Parse a single ingredient line, then extracts quantity, unity and name.
-
-    #Examples
-    # 1kg de asado de tira
-    # Merluza fresca 500g
-    # 1,25kg de lomo
-    # Bondiola 1,75kg
 
     line = line.strip()
 

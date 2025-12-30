@@ -3,7 +3,7 @@
 import pandas as pd
 from src.parsers.utils import clean_and_convert_price
 
-def parse_precios_carnes(file_path):
+def parse_meat_prices(file_path):
 
     # Read excel file, return dictionary:
     # key: meat/fish name

@@ -4,7 +4,7 @@ import re
 import pdfplumber as pdf
 from src.parsers.utils import clean_and_convert_price
 
-def parse_precios_verduras(file_path):
+def parse_vegetables_prices(file_path):
     
     # read pdf file
     prices = {}
