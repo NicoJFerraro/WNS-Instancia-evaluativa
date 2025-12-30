@@ -8,10 +8,15 @@ def clean_and_convert_price(value):
     
     #if it is already a number
     if isinstance(value, (int, float)):
-
-        if value < 100 and isinstance(value, float) and value != int(value):
-            resultado = int(value * 1000)
-            return resultado
+        if value < 0:
+            return None
+        
+        if isinstance(value, float) and value != int(value):
+            if value < 1000:
+                resultado = int(value * 1000)
+                return resultado
+            else:
+                return int(value)
         else:
             return int(value)
 

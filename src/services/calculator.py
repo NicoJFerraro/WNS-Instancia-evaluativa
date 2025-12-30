@@ -7,7 +7,7 @@ def ceil_to_multiple_of_250(grams: float) -> int:
     # Round up to the nearest multiple of 250 grams
 
     if grams <= 0:
-        return 250
+        return 0
     
     multiples = math.ceil(grams / 250)
     return int(multiples * 250)
@@ -17,6 +17,15 @@ def calculate_total_recipe_cost(
         prices: Dict[str, Dict[str, float]],
         exchange_rate_usd_to_ars: float
         ) -> Dict:
+    
+    if not isinstance(recipe, dict):
+        raise ValueError("Recipe must be a dictionary")
+    
+    if "ingredientes" not in recipe:
+        raise ValueError("Recipe must contain 'ingredientes' key")
+    
+    if not isinstance(prices, dict):
+        raise ValueError("Prices must be a dictionary")
     
     if exchange_rate_usd_to_ars <= 0:
         raise ValueError("Exchange rate must be greater than 0")

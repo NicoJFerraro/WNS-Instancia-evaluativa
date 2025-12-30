@@ -1,17 +1,21 @@
-# src/services/price.py
+# src/services/exchange_rate.py
 
 import requests
 from typing import Union
 from datetime import datetime, timedelta, date
 
-def get_exchange_rate_usd_to_ars(date_input: Union[str, datetime.date]) -> float:
+def get_exchange_rate_usd_to_ars(date_input: Union[str, datetime, date]) -> float:
 
-    if isinstance(date_input, datetime):
+    if isinstance(date_input, (datetime, date)):
         date_str = date_input.strftime('%Y-%m-%d')
-    elif isinstance(date_input, date):
-        date_str = date_input.strftime('%Y-%m-%d')
-    else: 
-        date_str = date_input
+    elif isinstance(date_input, str):
+        try:
+            datetime.strptime(date_input, '%Y-%m-%d')
+            date_str = date_input
+        except ValueError:
+            raise ValueError(f"Invalid date format: {date_input}. Expected format: YYYY-MM-DD")
+    else:
+        raise ValueError(f"Invalid date type: {type(date_input)}. Expected str, datetime, or date")
 
     url = f"https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@{date_str}/v1/currencies/usd.json"
 
