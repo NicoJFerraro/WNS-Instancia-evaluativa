@@ -39,7 +39,7 @@ def parse_vegetables_prices(file_path):
                             if not any(desc in vegetable_name for desc in common_descriptions):
                                 prices[vegetable_name] = price
     except Exception as e:
-        print(f"Error leyendo PDF: {e}")
+        print(f"Error reading PDF file: {e}")
         import traceback
         traceback.print_exc()
     return prices

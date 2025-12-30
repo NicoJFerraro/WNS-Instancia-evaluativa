@@ -41,7 +41,7 @@ def parse_meat_prices(file_path):
         return precios 
     
     except Exception as e:
-        print(f"Error al leer el archivo Excel: {e}")
+        print(f"Error reading Excel file: {e}")
         import traceback
         traceback.print_exc()
         return {}
