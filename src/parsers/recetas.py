@@ -1,4 +1,5 @@
-#src/parsers.py
+# src/parsers/recetas.py
+
 import re
 
 def parse_recetas(file_path):
@@ -41,7 +42,7 @@ def parse_recetas(file_path):
                 if not line.strip() or line.strip().startswith('-') and len(line.strip()) == 1:
                     continue
                 
-                ingrediente = parse_ingredient_line(line)
+                ingrediente = parse_ingrediente_linea(line)
                 if ingrediente:
                     ingredientes.append(ingrediente)
     
@@ -53,7 +54,7 @@ def parse_recetas(file_path):
     
     return recetas
 
-def parse_ingredient_line(line):
+def parse_ingrediente_linea(line):
     #Parse a single ingredient line, then extracts quantity, unity and name.
 
     #Examples
