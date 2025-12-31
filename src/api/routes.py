@@ -25,12 +25,22 @@ def configure_routes(app):
     
     @app.route('/api/calculate', methods=['POST'])
     def calculate_cost():
-        data=request.json
+        data = request.json
 
-        if not data or "recipe_name" not in data or "date" not in data:
+        if not data:
+            return jsonify({"error": "Request body is required"}), 400
+        
+        if "recipe_name" not in data or "date" not in data:
             return jsonify({"error": "Missing recipe_name or date in request body"}), 400
         
-        recipe = db.recipe_by_name(data["recipe_name"])
+        if not isinstance(data.get("recipe_name"), str) or not isinstance(data.get("date"), str):
+            return jsonify({"error": "recipe_name and date must be strings"}), 400
+        
+        recipe_name = data["recipe_name"].strip()
+        if not recipe_name:
+            return jsonify({"error": "recipe_name cannot be empty"}), 400
+        
+        recipe = db.recipe_by_name(recipe_name)
         if not recipe:
             return jsonify({"error": "Recipe not found"}), 404
         
@@ -54,7 +64,7 @@ def configure_routes(app):
         )
 
         return jsonify({
-            "recipe_name": data["recipe_name"],
+            "recipe_name": recipe_name,
             "calculation_date": date.isoformat(),
             "exchange_rate_usd_to_ars": exchange_rate,
             "cost_details": result
