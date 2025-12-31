@@ -25,13 +25,29 @@ def get_exchange_rate_usd_to_ars(date_input: Union[str, datetime, date]) -> floa
 
 
         data = response.json()
-        exchange_rate = data['usd']['ars']
-        return float(exchange_rate)
+        
+        if not isinstance(data, dict):
+            raise Exception("Invalid API response: expected JSON object")
+        
+        if 'usd' not in data:
+            raise Exception("Exchange rate data not found in API response: missing 'usd' key")
+        
+        if not isinstance(data['usd'], dict):
+            raise Exception("Invalid API response: 'usd' must be an object")
+        
+        if 'ars' not in data['usd']:
+            raise Exception("Exchange rate data not found in API response: missing 'ars' key")
+        
+        try:
+            exchange_rate = float(data['usd']['ars'])
+            if exchange_rate <= 0:
+                raise Exception(f"Invalid exchange rate value: {exchange_rate}")
+            return exchange_rate
+        except (ValueError, TypeError) as e:
+            raise Exception(f"Invalid exchange rate format in API response: {e}")
     
     except requests.exceptions.RequestException as e:
         raise Exception(f"Error fetching exchange rate from API: {e}")
-    except KeyError as e:
-        raise Exception(f"Exchange rate data not found in API response: {e}")
     
 def validate_date_within_last_30_days(date: Union[str, datetime, date]) -> date:
     today = datetime.now().date()
