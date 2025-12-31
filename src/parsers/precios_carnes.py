@@ -3,6 +3,22 @@
 import pandas as pd
 from src.parsers.utils import clean_and_convert_price
 
+MEAT_NAME_COL = 2
+MEAT_PRICE_COL = 3
+FISH_NAME_COL = 5
+FISH_PRICE_COL = 6
+
+def _process_corte(row, name_index, price_index, posibles_headers, precios):
+    corte = str(row.iloc[name_index]).strip() if pd.notna(row.iloc[name_index]) else None
+    precio_raw = row.iloc[price_index]
+    
+    if not corte or corte == 'nan' or corte in posibles_headers:
+        return
+    
+    precio = clean_and_convert_price(precio_raw)
+    if precio is not None:
+        precios[corte] = precio
+
 def parse_meat_prices(file_path):
 
     # Read excel file, return dictionary:
@@ -12,36 +28,26 @@ def parse_meat_prices(file_path):
 
     try:
         df = pd.read_excel(file_path, header=None, skiprows=3)
-
         precios = {}
-
         posibles_headers = ['Carne Vacuna', 'Carne de Cerdo', 'Pollo', 'Corte', 'Precio (ARS/kg)', 'Tipo']
 
         for _, row in df.iterrows():
-            corte_carne = str(row.iloc[2]).strip() if pd.notna(row.iloc[2]) else None
-            precio_corte_carne = row.iloc[3]
-
-            if not corte_carne or corte_carne == 'nan' or corte_carne in posibles_headers:
-                continue
-
-            precio = clean_and_convert_price(precio_corte_carne)
-            if precio is not None:
-                precios[corte_carne] = precio
-
-            corte_pescado = str(row.iloc[5]).strip() if pd.notna(row.iloc[5]) else None
-            precio_corte_pescado = row.iloc[6]
-
-            if not corte_pescado or corte_pescado == 'nan' or corte_pescado in posibles_headers:
-                continue
-
-            precio = clean_and_convert_price(precio_corte_pescado)
-            if precio is not None:
-                precios[corte_pescado] = precio
+            _process_corte(row, MEAT_NAME_COL, MEAT_PRICE_COL, posibles_headers, precios)
+            _process_corte(row, FISH_NAME_COL, FISH_PRICE_COL, posibles_headers, precios)
 
         return precios 
     
-    except Exception as e:
+    except FileNotFoundError as e:
+        print(f"Error: File not found: {e}")
+        return {}
+    except pd.errors.EmptyDataError as e:
+        print(f"Error: Excel file is empty: {e}")
+        return {}
+    except pd.errors.ExcelFileError as e:
         print(f"Error reading Excel file: {e}")
+        return {}
+    except Exception as e:
+        print(f"Unexpected error reading Excel file: {e}")
         import traceback
         traceback.print_exc()
         return {}

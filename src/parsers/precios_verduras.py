@@ -2,6 +2,7 @@
 
 import re
 import pdfplumber as pdf
+from pdfminer.pdfparser import PDFSyntaxError
 from src.parsers.utils import clean_and_convert_price
 
 def parse_vegetables_prices(file_path):
@@ -38,8 +39,12 @@ def parse_vegetables_prices(file_path):
 
                             if not any(desc in vegetable_name for desc in common_descriptions):
                                 prices[vegetable_name] = price
+    except FileNotFoundError as e:
+        print(f"Error: File not found: {e}")
+    except PDFSyntaxError as e:
+        print(f"Error: Invalid PDF file: {e}")
     except Exception as e:
-        print(f"Error reading PDF file: {e}")
+        print(f"Unexpected error reading PDF file: {e}")
         import traceback
         traceback.print_exc()
     return prices
