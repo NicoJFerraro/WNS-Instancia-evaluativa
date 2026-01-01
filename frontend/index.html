@@ -1,0 +1,32 @@
+<!-- frontend/index.html -->
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Costos de Recetas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Calculadora de Costos de Recetas</h1>
+        
+        <div class="form-group">
+            <label for="receta">Seleccione una receta:</label>
+            <select id="receta"></select>
+        </div>
+        
+        <div class="form-group">
+            <label for="fecha">Fecha (YYYY-MM-DD):</label>
+            <input type="date" id="fecha">
+        </div>
+        
+        <button id="calcular">Calcular Costo</button>
+        
+        <div id="resultado" class="resultado"></div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>

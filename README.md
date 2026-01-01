@@ -39,9 +39,14 @@ docker-compose exec api python -m src.ingest.ingest
 
 # 4. Probar API
 curl http://localhost:5001/health
+
+# 5. Abrir frontend en el navegador
+# http://localhost:5001
 ```
 
-La API estará disponible en `http://localhost:5001`
+La API y el frontend estarán disponibles en `http://localhost:5001`
+
+**Nota**: El frontend se sirve automáticamente desde Flask. Solo necesitas abrir el navegador en la URL indicada.
 
 ### Opción 2: Instalación Local
 
@@ -56,11 +61,13 @@ pip install -r requirements.txt
 # 3. Ejecutar ingesta de datos
 python -m src.ingest.ingest
 
-# 4. Ejecutar API
+# 4. Ejecutar API (incluye frontend)
 python -m src.api.app
 ```
 
-La API estará disponible en `http://localhost:5001`
+La API y el frontend estarán disponibles en `http://localhost:5001`
+
+**Nota**: El frontend se sirve automáticamente desde Flask. Solo necesitas abrir el navegador en `http://localhost:5001`
 
 ## Endpoints de la API
 
@@ -319,6 +326,10 @@ WNS-Instancia-evaluativa/
 │   └── verduleria.pdf
 ├── database/                 # Base de datos JSON (generada)
 │   └── data.json
+├── frontend/                 # Frontend web
+│   ├── index.html
+│   ├── style.css
+│   └── app.js
 ├── Dockerfile
 ├── docker-compose.yml
 ├── .dockerignore
@@ -389,6 +400,25 @@ El proyecto procesa:
 
 Los datos se normalizan y almacenan en `database/data.json` después de ejecutar la ingesta.
 
+## Frontend
+
+El frontend está integrado en Flask y se sirve automáticamente en `http://localhost:5001`.
+
+**Uso:**
+1. Inicia la API (ver sección "Instalación y Uso")
+2. Abre tu navegador en `http://localhost:5001`
+3. Selecciona una receta y una fecha
+4. Haz clic en "Calcular Costo"
+
+El frontend consume los endpoints de la API para mostrar los resultados.
+
+**Nota**: Si prefieres servir el frontend por separado, puedes usar:
+```bash
+cd frontend
+python -m http.server 8080
+# Luego abrir: http://localhost:8080
+```
+
 ## Testing
 
 ### Probar Endpoints Manualmente
@@ -414,10 +444,12 @@ curl -X POST http://localhost:5001/api/calculate \
 - Parsing de múltiples formatos (Markdown, Excel, PDF)
 - Base de datos JSON normalizada
 - API REST con validaciones
+- Frontend web integrado
 - Cálculo de costos con redondeo a múltiplos de 250g
 - Integración con API de tipo de cambio
 - Validación de fechas (últimos 30 días)
 - Dockerizado para fácil deployment
+- CORS configurado para desarrollo
 - Manejo de errores robusto
 
 ## Detalles Técnicos

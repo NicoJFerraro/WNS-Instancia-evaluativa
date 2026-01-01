@@ -6,15 +6,15 @@ def clean_and_convert_price(value):
     if pd.isna(value):
         return None
     
-    #if it is already a number
+    # If it is already a number
     if isinstance(value, (int, float)):
         if value < 0:
             return None
         
         if isinstance(value, float) and value != int(value):
             if value < 1000:
-                resultado = int(value * 1000)
-                return resultado
+                result = int(value * 1000)
+                return result
             else:
                 return int(value)
         else:
