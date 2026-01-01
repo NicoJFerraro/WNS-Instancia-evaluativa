@@ -133,18 +133,18 @@ curl http://localhost:5001/api/recipes
 **Diagrama de Secuencia:**
 ```mermaid
 sequenceDiagram
-    participant Client
+    participant Browser as Browser/Frontend
     participant API
     participant Routes
     participant Database
 
-    Client->>API: GET /api/recipes
+    Browser->>API: GET /api/recipes
     API->>Routes: get_recipes()
     Routes->>Database: get_recipes()
     Database->>Database: load()
     Database-->>Routes: List[Dict]
     Routes-->>API: JSON response
-    API-->>Client: 200 OK + JSON
+    API-->>Browser: 200 OK + JSON
 ```
 
 ---
@@ -243,7 +243,7 @@ curl -X POST http://localhost:5001/api/calculate \
 **Diagrama de Secuencia:**
 ```mermaid
 sequenceDiagram
-    participant Client
+    participant Browser as Browser/Frontend
     participant API
     participant Routes
     participant Database
@@ -251,10 +251,9 @@ sequenceDiagram
     participant Calculator
     participant ExternalAPI
 
-    Client->>API: POST /api/calculate<br/>{recipe_name, date}
+    Browser->>API: POST /api/calculate<br/>{recipe_name, date}
     API->>Routes: calculate_cost()
     
-    Routes->>Routes: Validar Content-Type
     Routes->>Routes: Validar campos requeridos
     
     Routes->>Database: recipe_by_name(recipe_name)
@@ -263,14 +262,14 @@ sequenceDiagram
     
     alt Receta no encontrada
         Routes-->>API: 404 Not Found
-        API-->>Client: Error response
+        API-->>Browser: Error response
     else Receta encontrada
         Routes->>ExchangeService: validate_date_within_last_30_days(date)
         ExchangeService-->>Routes: date (validado) o ValueError
         
         alt Fecha inválida
             Routes-->>API: 400 Bad Request
-            API-->>Client: Error response
+            API-->>Browser: Error response
         else Fecha válida
             Routes->>ExchangeService: get_exchange_rate_usd_to_ars(date)
             ExchangeService->>ExternalAPI: GET currency-api
@@ -279,7 +278,7 @@ sequenceDiagram
             
             alt Error obteniendo tipo de cambio
                 Routes-->>API: 500 Internal Server Error
-                API-->>Client: Error response
+                API-->>Browser: Error response
             else Tipo de cambio obtenido
                 Routes->>Database: load()
                 Database-->>Routes: Dict (precios)
@@ -289,7 +288,7 @@ sequenceDiagram
                 Calculator-->>Routes: Dict (resultado cálculo)
                 
                 Routes-->>API: JSON response
-                API-->>Client: 200 OK + JSON
+                API-->>Browser: 200 OK + JSON
             end
         end
     end
@@ -486,11 +485,92 @@ La aplicación maneja automáticamente JSON corrupto, retornando una estructura 
 ### Error: Archivo no encontrado
 Asegúrate de que los archivos en `inputs/` existan antes de ejecutar la ingesta.
 
+## Decisiones Técnicas y Diseño
+
+### Arquitectura
+
+Se implementó una arquitectura modular con responsabilidades separadas:
+
+- **Parsing modular**: Cada tipo de archivo (Markdown, Excel, PDF) tiene su propio parser en módulos separados
+- **Base de datos JSON**: Como formato de almacenamiento para simplicidad y facilidad de depuración
+- **Separación ingesta/API**: La ingesta se ejecuta una vez, los datos se normalizan, y la API lee desde JSON (para no parsear archivos en cada request)
+- **Frontend integrado**: Frontend se sirve desde Flask para simplificar el deployment
+
+### Tecnologías Elegidas
+
+- **Flask**: Framework ligero y adecuado para APIs REST
+- **Pandas**: Librería robusta para procesamiento de Excel
+- **pdfplumber**: Herramienta efectiva para extracción de datos de PDFs
+- **Docker**: Facilita la reproducción del entorno
+
+### Fortalezas
+
+- **Modularidad**: Código organizado en módulos independientes, fácil de mantener y extender
+- **Normalización de datos**: Los datos se procesan una vez y se almacenan normalizados
+- **Validaciones**: Validación de fechas, tipos de datos y manejo de errores robusto
+- **Dockerizado**: Fácil deployment y reproducción del entorno
+- **API REST**: Interfaz clara y estándar para consumo de datos
+- **Frontend integrado**: Experiencia de usuario completa sin necesidad de configuración adicional
+
+### Debilidades y Limitaciones
+
+- **Base de datos JSON**: No es adecuada para altos volúmenes de datos o concurrencia alta
+- **Sin caché**: Cada request de cálculo consulta la API externa de tipo de cambio
+- **Validación de Content-Type**: Falta validación explícita en algunos endpoints (aunque Flask la maneja implícitamente)
+- **Manejo de errores**: Podrían mejorarse con logging estructurado
+- **Sin autenticación**: La API es pública
+
+### Asunciones
+
+- Los precios no cambian con el tiempo
+- Los archivos de entrada no se modifican
+- La API de tipo de cambio externa está disponible y siempre responde correctamente
+- Las fechas proporcionadas están en formato YYYY-MM-DD
+- Los nombres de ingredientes en recetas coinciden exactamente con los nombres en los archivos de precios (case-insensitive)
+
+### Limitaciones y Condiciones de Operación
+
+- **Fechas**: Solo se aceptan fechas dentro de los últimos 30 días
+- **Cantidades**: Se redondean hacia arriba a múltiplos de 250g
+- **Puerto**: Por mi caso y el otros usuarios de MacOS, la aplicación usa el puerto 5001 (5000 está ocupado por macOS AirPlay Receiver)
+- **Datos**: Requiere ejecutar la ingesta antes de usar la API
+- **Sincronía**: La API de tipo de cambio es consultada en cada request
+- **Concurrencia**: Flask en modo development no sería el adecuado para producción
+
+## Escalabilidad y Deployment en Producción
+
+### Cambios Recomendados para Producción
+
+**Backend y API:**
+- Usar un servidor WSGI como Gunicorn o uWSGI en lugar del servidor de desarrollo de Flask
+- Implementar caché (Redis) para los tipos de cambio y datos frecuentes
+- Migrar de JSON a una base de datos relacional (PostgreSQL) o NoSQL (MongoDB) según necesidades
+- Agregar autenticación/autorización si se requiere
+- Implementar logging estructurado y monitoreo (Grafana)
+- Se podría sumar un rate limiting para proteger la API
+- Usar variables de entorno para configuración sensible
+
+**Infraestructura:**
+- Desplegar en contenedores orquestados (Kubernetes, Docker Swarm) o servicios gestionados (AWS ECS, Google Cloud Run)
+- Implementar load balancer para múltiples instancias
+- Agregar CDN para servir el frontend estático
+- Configurar HTTPS con certificados SSL
+- Implementar CI/CD para deployments automatizados
+- Considerar health checks y auto-scaling basado en métricas
+
+**Frontend:**
+- Separar el frontend del backend y servirlo desde un web server o CDN
+- Implementar un build process para optimizar assets (minificación, bundling)
+- Agregar manejo de errores más robusto y feedback visual mejorado
+- Considerar un framework frontend (React, Vue) si la aplicación crece en complejidad
+
 ## Licencia
 
 Este proyecto fue desarrollado como parte de un challenge técnico.
 
 ## Autor
+
+Nicolás J. Ferraro
 
 Desarrollado como parte del WNS Challenge.
 
